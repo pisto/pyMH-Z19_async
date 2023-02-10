@@ -54,7 +54,7 @@ class MHZ19Protocol(asyncio.Protocol):
                 case MHZ19CODES.SET_ABC:
                     message += pack(">Bxxxx", 0xA0 if args[0] else 0)
                 case code if MHZ19CODES.WRITE_CONFIG_0x000 <= code <= MHZ19CODES.WRITE_CONFIG_0x300:
-                    message += pack(">BI", args[0], args[1])
+                    message += pack(">BI", *args)
                 case code if MHZ19CODES.READ_CONFIG_0x000 <= code <= MHZ19CODES.READ_CONFIG_0x300:
                     message += pack(">Bxxxx", args[0])
                 case _:

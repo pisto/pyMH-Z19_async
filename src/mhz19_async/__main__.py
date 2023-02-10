@@ -23,10 +23,14 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
             command = req['command']
             if isinstance(command, str):
                 command = MHZ19CODES[req['command']]
+            args = req.get('args')
             raw_args = req.get('raw_args')
             if raw_args is not None:
-                raw_args = bytes(raw_args)
-            self.send_command(command, req.get('args'), raw_args=raw_args)
+                self.send_command(command, raw_args=raw_args)
+            elif isinstance(args, list):
+                self.send_command(command, *args)
+            else:
+                self.send_command(command, args)
             self.last_command_timestamp = time.monotonic()
             # throttle commands to 20/s
             await asyncio.sleep(0.05)
