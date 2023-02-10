@@ -5,6 +5,7 @@ import time
 from asyncio import AbstractEventLoop
 
 import aiofiles
+import serial
 from serial_asyncio import create_serial_connection, SerialTransport
 
 from .mhz19 import MHZ19Protocol, MHZ19CODES
@@ -49,7 +50,8 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
 async def main() -> int:
     loop = asyncio.get_event_loop()
     transport, protocol = await create_serial_connection(
-        loop, lambda: MHZ19ProtocolConsole(loop), sys.argv[1], baudrate=9600)
+        loop, lambda: MHZ19ProtocolConsole(loop), sys.argv[1], exclusive=True,
+        baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
     await protocol.reader_task_future
     reader_task = protocol.reader_task_future.result()
     # wait for end of stdin, or exception
