@@ -20,6 +20,7 @@ class MHZ19CODES(IntEnum):
     WRITE_CONFIG_0x100 = 0x81  # byte (offset), byte[4] (value): write value in configuration area @ offset + 0x100
     WRITE_CONFIG_0x200 = 0x82  # byte (offset), byte[4] (value): write value in configuration area @ offset + 0x200
     WRITE_CONFIG_0x300 = 0x83  # byte (offset), byte[4] (value): write value in configuration area @ offset + 0x300
+    GET_CO2_TEMPERATURE = 0x86
     RESET = 0x8D
     READ_CONFIG = 0x90  # offset < 1024: read value in configuration area @ offset
     READ_CONFIG_0x000 = 0x90  # byte: read value in configuration area @ offset + 0x000
@@ -66,6 +67,8 @@ class MHZ19Protocol(asyncio.Protocol):
     def connection_made(self, transport: serial_asyncio.SerialTransport) -> None:
         self._transport = transport
 
+    ACK = bytes([1, 0, 0, 0, 0, 0])
+
     def data_received(self, data: bytes) -> None:
         self._leftover += data
         """
@@ -91,11 +94,18 @@ class MHZ19Protocol(asyncio.Protocol):
 
             try:
                 event['command'] = MHZ19CODES(event['command'])
+                _ = tuple([None])
                 match event['command']:
                     case MHZ19CODES.GET_ABC:
-                        event['ABC'] = unpack(">xxxxx?", event['raw'])[0]
+                        event['ABC'], _ = unpack(">xxxxx?", event['raw']) + _
+                    case MHZ19CODES.GET_CO2_TEMPERATURE:
+                        event['CO2'], event['temperature'], _ = unpack(">HBxxx", event['raw']) + _
+                        event['temperature'] -= 40
                     case MHZ19CODES.GET_FIRMWARE_VERSION:
-                        event['version'] = unpack(">4sxx", event['raw'])[0].decode("ascii")
+                        event['version'], _ = unpack(">4sxx", event['raw']) + _
+                        event['version'] = event['version'].decode("ascii")
+                    case MHZ19CODES.SET_ABC:
+                        event['ack'] = event['raw'] == MHZ19Protocol.ACK
             except Exception as exc:
                 event['error'] = str(exc)
             self.event_received(event)
