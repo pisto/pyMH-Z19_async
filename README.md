@@ -24,6 +24,8 @@ This library provides
 - a `class MHZ19Protocol(asyncio.Protocol)` to speak the protocol of the sensor
 - an executable that reads commands and prints results in json format.
 
+[Implemented commands](./src/mhz19_async/mhz19.py#L17-L39) documented in source, as well as [response parsing](./src/mhz19_async/mhz19.py#L128-L145). TODO better docs and pypi installation. Use [`__main__.py`](./src/__main__.py) is your reference for using the library, it is very simple.
+
 Contrary to most implementations, this library makes no attempt to match input commands to responses from the sensor.
 This is because the input and output dataframes do not have identifiers that allow a reliable match between requests and
 responses. The intended use case is to send periodically CO2 read requests, in order to get readings at a user-defined
