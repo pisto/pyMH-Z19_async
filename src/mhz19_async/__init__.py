@@ -1,3 +1,3 @@
-from .mhz19 import MHZ19Protocol, MHZ19CODES
+from .mhz19 import MHZ19Protocol
 
-__all__ = [MHZ19Protocol, MHZ19CODES]
+__all__ = [MHZ19Protocol]

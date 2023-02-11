@@ -5,10 +5,9 @@ import time
 from asyncio import AbstractEventLoop
 
 import aiofiles
-import serial
-from serial_asyncio import create_serial_connection, SerialTransport
+import serial_asyncio
 
-from .mhz19 import MHZ19Protocol, MHZ19CODES
+from .mhz19 import MHZ19Protocol
 
 
 class MHZ19ProtocolConsole(MHZ19Protocol):
@@ -22,7 +21,7 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
             req = json.loads(line)
             command = req['command']
             if isinstance(command, str):
-                command = MHZ19CODES[req['command']]
+                command = MHZ19Protocol.Codes[req['command']]
             args = req.get('args')
             raw_args = req.get('raw_args')
             if raw_args is not None:
@@ -36,14 +35,14 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
             await asyncio.sleep(0.05)
 
     def event_received(self, event: dict):
-        if isinstance(event['command'], MHZ19CODES):
+        if isinstance(event['command'], MHZ19Protocol.Codes):
             event['command'] = event['command'].name
         del event['checksum']
         event['raw'] = event['raw'].hex().upper()
         # print() blocks, prevents partial writes and throttle the program.
         print(json.dumps(event))
 
-    def connection_made(self, transport: SerialTransport) -> None:
+    def connection_made(self, transport: serial_asyncio.SerialTransport) -> None:
         super().connection_made(transport)
         self.reader_task_future.set_result(asyncio.create_task(self.read_input()))
 
@@ -61,9 +60,8 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
 
 async def main() -> int:
     loop = asyncio.get_event_loop()
-    transport, protocol = await create_serial_connection(
-        loop, lambda: MHZ19ProtocolConsole(loop), sys.argv[1], exclusive=True,
-        baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
+    transport, protocol = await serial_asyncio.create_serial_connection(
+        loop, lambda: MHZ19ProtocolConsole(loop), sys.argv[1], exclusive=True, **MHZ19Protocol.SERIAL_OPTIONS)
     await protocol.reader_task_future
     reader_task = protocol.reader_task_future.result()
     # wait for end of stdin, or exception
