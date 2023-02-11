@@ -4,7 +4,7 @@ Python library for communicating with the MH-Z19x sensors for CO2 with asyncio.
 
 This sensor is very badly documented and there are conflicting reports on its working. To make things worse, several
 hardware versions exist (including knockoffs), and there are also different firmware versions. **Testing was done on an
-MH-Z19B sensor (green PCB) that reports firmware version 0502.** Only the commands that I could test personally are
+MH-Z19B sensor (green PCB) that reports firmware version 0502.** Only the commands that I could test and verify personally are
 implemented. Several other commands were tried (including the unlimited/raw CO2 readings, "background" and calibration
 data readings), but results are inconsistent with docs or other implementations, and they are left out for now.
 
