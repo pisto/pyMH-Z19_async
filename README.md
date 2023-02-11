@@ -10,7 +10,7 @@ data readings), but results are inconsistent with docs or other implementations,
 
 Here is a list of references used to implement the protocol:
 - [some datasheets](https://github.com/WifWaf/MH-Z19/tree/master/extras/Datasheets), include operational limits
-- reverse engineering of the [MH-Z19](https://revspace.nl/MHZ19) and (MH-Z19B)(https://revspace.nl/MH-Z19B) sensors, quite thorough
+- reverse engineering of the [MH-Z19](https://revspace.nl/MHZ19) and [MH-Z19B](https://revspace.nl/MH-Z19B) sensors, quite thorough
 - https://github.com/WifWaf/MH-Z19: reference Arduino library, several inconsistencies with the above reverse engineering
 - [raw braindump](https://docs.google.com/spreadsheets/d/1hSbtUwD5b78hpo37Z1yIxQ3oiaQXUNfCuivmhBwS0-E/edit#gid=495131982) of the author of the Arduino library
 - [another blog post](https://habr.com/en/post/401363/) in Russian that sheds some light on CO2 readings and the MODBUS protocol.
