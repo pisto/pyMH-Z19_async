@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymhz19_async"
+version = "0.1.0"
+authors = [
+    { name = "Lorenzo Pistone", email = "blaffablaffa@gmail.com" },
+]
+description = "Python async library to interface with the MH-Z19* sensors for CO2."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles~=23.1.0",
+    "pyserial~=3.5",
+    "pyserial-asyncio~=0.6"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["MH-Z19", "async", "raspberry", "serial", "CO2", "carbon dioxide"]
+
+[project.urls]
+"Homepage" = "https://github.com/pisto/pyMH-Z19_async"
