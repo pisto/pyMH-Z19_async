@@ -15,7 +15,8 @@ Protocol is implemented from https://revspace.nl/MH-Z19B and available spreadshe
 
 class MHZ19Protocol(asyncio.Protocol):
     class Codes(IntEnum):
-        GET_CO2_TEMPERATURE = 0x86
+        GET_CO2 = 0x85
+        GET_CLAMPED_CO2_TEMPERATURE = 0x86
 
         SET_ABC = 0x79  # bool: on/off
         GET_ABC = 0x7D
@@ -131,9 +132,11 @@ class MHZ19Protocol(asyncio.Protocol):
                 match event['command']:
                     case codes.GET_ABC:
                         event['ABC'], _ = unpack(">xxxxx?", event['raw']) + _
-                    case codes.GET_CO2_TEMPERATURE:
+                    case codes.GET_CLAMPED_CO2_TEMPERATURE:
                         event['CO2'], event['temperature'] = unpack(">HBxxx", event['raw'])
                         event['temperature'] -= MHZ19Protocol.TEMPERATURE_OFFSET
+                    case codes.GET_CO2:
+                        event['CO2'], _ = unpack(">xxHxx", event['raw']) + _
                     case codes.GET_FIRMWARE_VERSION:
                         event['version'], _ = unpack(">4sxx", event['raw']) + _
                         self._version = event['version'] = event['version'].decode("ascii")
