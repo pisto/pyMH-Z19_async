@@ -1,8 +1,8 @@
 import asyncio
 import json
+import signal
 import sys
 import time
-from asyncio import AbstractEventLoop
 
 import aiofiles
 import serial_asyncio
@@ -11,12 +11,11 @@ from .mhz19 import MHZ19Protocol
 
 
 class MHZ19ProtocolConsole(MHZ19Protocol):
-    def __init__(self, loop: AbstractEventLoop):
-        super().__init__()
-        self.reader_task_future = loop.create_future()
-        self.last_command_timestamp = float('-inf')
+    def __init__(self, loop: asyncio.AbstractEventLoop):
+        super().__init__(loop)
+        self._last_command_timestamp = float('-inf')
 
-    async def read_input(self):
+    async def read_input(self, rate: int):
         async for line in aiofiles.stdin:
             req = json.loads(line)
             command = req['command']
@@ -30,46 +29,46 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
                 self.send_command(command, *args)
             else:
                 self.send_command(command, args)
-            self.last_command_timestamp = time.monotonic()
-            # throttle commands to 20/s
-            await asyncio.sleep(0.05)
+            self._last_command_timestamp = time.monotonic()
+            await asyncio.sleep(1 / rate)
+
+    async def graceful_close(self, grace_time: float):
+        await asyncio.sleep(max(grace_time - (time.monotonic() - self._last_command_timestamp), 0))
+        self._transport.close()
 
     def event_received(self, event: dict):
         if isinstance(event['command'], MHZ19Protocol.Codes):
             event['command'] = event['command'].name
         del event['checksum']
         event['raw'] = event['raw'].hex().upper()
-        # print() blocks, prevents partial writes and throttle the program.
+        # print() blocks, prevents partial writes and throttles the program.
         print(json.dumps(event))
 
-    def connection_made(self, transport: serial_asyncio.SerialTransport) -> None:
-        super().connection_made(transport)
-        self.reader_task_future.set_result(asyncio.create_task(self.read_input()))
 
-    def connection_lost(self, exc: Exception | None) -> None:
-        # TODO PL2302 USB-to-serial doesn't seem to generate disconnect even when unplugging
-        if self.reader_task_future.done():
-            # interrupt stdin reader when connection is lost
-            reader_task = self.reader_task_future.result()
-            if not reader_task.done():
-                reader_task.cancel(str(exc))
-        else:
-            self.reader_task_future.cancel(str(exc))
-        super().connection_lost(exc)
+COMMAND_RATE = 20
+SHUTDOWN_GRACE_TIME = 0.2
 
 
 async def main() -> int:
     loop = asyncio.get_event_loop()
     transport, protocol = await serial_asyncio.create_serial_connection(
         loop, lambda: MHZ19ProtocolConsole(loop), sys.argv[1], exclusive=True, **MHZ19Protocol.SERIAL_OPTIONS)
-    await protocol.reader_task_future
-    reader_task = protocol.reader_task_future.result()
-    # wait for end of stdin, or exception
-    await reader_task
-    # rethrow exception here if the reader_task was interrupted somehow
-    reader_task.result()
-    # wait at most 200 ms to retrieve the last response
-    await asyncio.sleep(max(0.2 - (time.monotonic() - protocol.last_command_timestamp), 0))
+    await protocol.connected.wait()
+    reader_task = asyncio.create_task(protocol.read_input(COMMAND_RATE))
+    loop.add_signal_handler(signal.SIGINT, lambda: reader_task.cancel())
+    loop.add_signal_handler(signal.SIGTERM, lambda: reader_task.cancel())
+    not_done = {reader_task, protocol.eof}
+    while bool(not_done):
+        done, not_done = await asyncio.wait(not_done, return_when=asyncio.FIRST_COMPLETED)
+        if reader_task in done and protocol.eof in not_done:
+            not_done.add(asyncio.create_task(protocol.graceful_close(SHUTDOWN_GRACE_TIME)))
+        if protocol.eof in done:
+            reader_task.cancel()
+
+    # rethrow exception if present, give priority to reader_task
+    if not reader_task.cancelled():
+        reader_task.result()
+    protocol.eof.result()
     return 0
 
 

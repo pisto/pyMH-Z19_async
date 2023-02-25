@@ -1,7 +1,7 @@
-from enum import IntEnum
 import asyncio
+from enum import IntEnum
 from itertools import islice
-from struct import unpack, pack
+from struct import pack, unpack
 from typing import Optional
 
 import serial
@@ -53,7 +53,9 @@ class MHZ19Protocol(asyncio.Protocol):
     def checksum(data: bytes) -> int:
         return ((0xFF - (sum(data) & 0xFF)) + 1) & 0xFF
 
-    def __init__(self):
+    def __init__(self, loop: asyncio.AbstractEventLoop):
+        self.connected = asyncio.Event()
+        self.eof = loop.create_future()
         self._transport = None
         self._leftover = []
         self._version = None
@@ -98,6 +100,14 @@ class MHZ19Protocol(asyncio.Protocol):
 
     def connection_made(self, transport: serial_asyncio.SerialTransport) -> None:
         self._transport = transport
+        self.connected.set()
+
+    def connection_lost(self, exc: Exception | None) -> None:
+        self.connected.clear()
+        if exc is None:
+            self.eof.set_result(None)
+        else:
+            self.eof.set_exception(exc)
 
     def data_received(self, data: bytes) -> None:
         codes = MHZ19Protocol.Codes
