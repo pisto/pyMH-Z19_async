@@ -24,11 +24,11 @@ This library provides
 - a `class MHZ19Protocol(asyncio.Protocol)` to speak the protocol of the sensor
 - an executable that reads commands and prints results in json format.
 
-[Implemented commands](https://github.com/pisto/pyMH-Z19_async/blob/v0.1.0/src/mhz19_async/mhz19.py#L17-L40) documented
+[Implemented commands](https://github.com/pisto/pyMH-Z19_async/blob/v0.2.0/src/mhz19_async/mhz19.py#L17-L40) documented
 in source, as well as
-[response parsing](https://github.com/pisto/pyMH-Z19_async/blob/v0.1.0/src/mhz19_async/mhz19.py#L132-L148).
+[response parsing](https://github.com/pisto/pyMH-Z19_async/blob/v0.2.0/src/mhz19_async/mhz19.py#L132-L148).
 
-[`__main__.py`](https://github.com/pisto/pyMH-Z19_async/blob/v0.1.0/src/mhz19_async/__main__.py) is your reference for
+[`__main__.py`](https://github.com/pisto/pyMH-Z19_async/blob/v0.2.0/src/mhz19_async/__main__.py) is your reference for
 using the library, it is very simple.
 
 Contrary to most implementations, this library makes no attempt to match input commands to responses from the sensor.
@@ -58,6 +58,9 @@ Output json fields:
 
 Protocol examples (input json followed by output json):
 ```json lines
+{"command": "GET_CO2"}
+{"command": "GET_CO2", "raw": "06DC01A905E6", "CO2": 425}
+
 {"command": "GET_CLAMPED_CO2_TEMPERATURE"}
 {"command": "GET_CLAMPED_CO2_TEMPERATURE", "raw": "03553B000000", "CO2": 853, "temperature": 19}
 
