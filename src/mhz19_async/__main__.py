@@ -17,6 +17,7 @@ class MHZ19ProtocolConsole(MHZ19Protocol):
 
     async def read_input(self, rate: int):
         async for line in aiofiles.stdin:
+            line = line.strip()
             if not bool(line):
                 continue
             req = json.loads(line)
